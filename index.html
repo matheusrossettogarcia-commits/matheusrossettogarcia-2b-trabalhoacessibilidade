@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal de Acessibilidade Visual</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #ffffff;
+      --accent-color: #ffcc00;
+      --focus-ring: #00e5ff;
+      --border-color: #333333;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: var(--accent-color);
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card h2 {
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      margin-top: 0;
+    }
+
+    .card p {
+      font-size: 1.1rem;
+      margin-bottom: 20px;
+    }
+
+    .btn-acessar {
+      display: inline-block;
+      background-color: var(--accent-color);
+      color: #000000;
+      font-weight: bold;
+      text-decoration: none;
+      padding: 14px 20px;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .btn-acessar:focus,
+    .btn-acessar:hover {
+      outline: 4px solid var(--focus-ring);
+      outline-offset: 2px;
+      background-color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+
+  <header role="banner">
+    <h1>Portal de Acessibilidade Visual</h1>
+    <p>Escolha a ferramenta desejada para ser direcionado à página de uso.</p>
+  </header>
+
+  <main class="container" role="main">
+
+    <!-- Card 1: Leitor de Documentos -->
+    <article class="card" aria-labelledby="card1-title">
+      <div>
+        <h2 id="card1-title">Leitor de Documentos</h2>
+        <p>Converta imagens, documentos e PDFs em áudio falado com voz de IA.</p>
+      </div>
+      <a href="leitor.html" target="_blank" class="btn-acessar" aria-label="Acessar o Leitor de Documentos">
+        Acessar
+      </a>
+    </article>
+
+    <!-- Card 2: Modo de Estudo -->
+    <article class="card" aria-labelledby="card2-title">
+      <div>
+        <h2 id="card2-title">Modo de Estudo</h2>
+        <p>Leitura de matérias escolares, explicação de termos e perguntas de fixação por voz.</p>
+      </div>
+      <a href="estudo.html" target="_blank" class="btn-acessar" aria-label="Acessar o Modo de Estudo">
+        Acessar
+      </a>
+    </article>
+
+    <!-- Card 3: Dicionário por Voz -->
+    <article class="card" aria-labelledby="card3-title">
+      <div>
+        <h2 id="card3-title">Dicionário por Voz</h2>
+        <p>Consulte palavras por voz para ouvir seus significados e a pronúncia correta.</p>
+      </div>
+      <a href="dicionario.html" target="_blank" class="btn-acessar" aria-label="Acessar o Dicionário por Voz">
+        Acessar
+      </a>
+    </article>
+
+  </main>
+
+</body>
+</html>
