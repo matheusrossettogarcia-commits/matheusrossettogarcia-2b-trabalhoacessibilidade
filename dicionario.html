@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dicionário de Voz - Acessível</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #ffffff;
+      --accent-color: #ffcc00;
+      --focus-ring: #00e5ff;
+      --border-color: #333333;
+      --user-msg: #2d3748;
+      --ia-msg: #1a365d;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .btn-voltar {
+      display: inline-block;
+      background-color: transparent;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      font-weight: bold;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-voltar:focus,
+    .btn-voltar:hover {
+      outline: 4px solid var(--focus-ring);
+      outline-offset: 2px;
+      background-color: var(--accent-color);
+      color: #000000;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 25px;
+    }
+
+    h1 {
+      color: var(--accent-color);
+      margin-top: 0;
+    }
+
+    /* Container do Chat */
+    .chat-container {
+      height: 350px;
+      overflow-y: auto;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px;
+      background-color: #000000;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .mensagem {
+      padding: 12px 16px;
+      border-radius: 8px;
+      max-width: 85%;
+      word-wrap: break-word;
+      font-size: 1.05rem;
+    }
+
+    .mensagem.ia {
+      background-color: var(--ia-msg);
+      align-self: flex-start;
+      border-left: 4px solid var(--accent-color);
+    }
+
+    .mensagem.usuario {
+      background-color: var(--user-msg);
+      align-self: flex-end;
+      border-right: 4px solid var(--focus-ring);
+    }
+
+    /* Form para Digitação */
+    .input-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      height: 50px;
+      background-color: #000000;
+      color: #ffffff;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      padding: 0 15px;
+      font-size: 1.1rem;
+    }
+
+    input[type="text"]:focus {
+      outline: 4px solid var(--focus-ring);
+    }
+
+    /* Botões do Chat */
+    .controles-chat {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-acao {
+      background-color: var(--accent-color);
+      color: #000000;
+      border: none;
+      font-weight: bold;
+      padding: 14px 20px;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .btn-mic {
+      background-color: var(--focus-ring);
+      color: #000000;
+    }
+
+    .btn-parar {
+      background-color: #ff4444;
+      color: #ffffff;
+      flex: 0.8;
+    }
+
+    .btn-acao:focus,
+    .btn-acao:hover {
+      outline: 4px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav aria-label="Navegação de retorno">
+    <button type="button" class="btn-voltar" onclick="voltarParaMenu()" aria-label="Fechar dicionário e voltar ao menu principal">
+      &larr; Voltar ao Menu Principal
+    </button>
+  </nav>
+
+  <main role="main">
+    <h1>Dicionário de Voz Acessível</h1>
+    <p>Digite ou fale uma palavra para ouvir a definição, classe gramatical e significado completo.</p>
+
+    <!-- Histórico da Conversa -->
+    <div class="chat-container" id="chat-box" role="log" aria-live="polite" aria-label="Histórico de consultas do dicionário">
+      <div class="mensagem ia">
+        <strong>Dicionário IA:</strong> Olá! Qual palavra você gostaria de pesquisar hoje? Digite abaixo ou clique no microfone para falar.
+      </div>
+    </div>
+
+    <!-- Campo de Entrada da Palavra -->
+    <div class="input-box">
+      <input type="text" id="palavra-input" placeholder="Digite uma palavra (Ex: Resiliência, Empatia, Altruísmo)..." aria-label="Campo para digitar a palavra a ser pesquisada">
+    </div>
+
+    <!-- Controles de Ação e Voz -->
+    <div class="controles-chat">
+      <button type="button" id="btn-buscar" class="btn-acao" aria-label="Buscar significado da palavra e ler em voz alta">
+        📖 Buscar Significado
+      </button>
+      <button type="button" id="btn-mic" class="btn-acao btn-mic" aria-label="Ativar microfone para falar uma palavra">
+        🎙️ Falar Palavra
+      </button>
+      <button type="button" id="btn-parar" class="btn-acao btn-parar" aria-label="Parar áudio do dicionário">
+        ⏹️ Parar Áudio
+      </button>
+    </div>
+  </main>
+
+  <script>
+    const chatBox = document.getElementById('chat-box');
+    const palavraInput = document.getElementById('palavra-input');
+    const btnBuscar = document.getElementById('btn-buscar');
+    const btnMic = document.getElementById('btn-mic');
+    const btnParar = document.getElementById('btn-parar');
+
+    // Suporte às APIs do Navegador
+    const suporteSintese = 'speechSynthesis' in window;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const suporteReconhecimento = !!Recognition;
+
+    function voltarParaMenu() {
+      if (suporteSintese) window.speechSynthesis.cancel();
+      window.close();
+      window.location.href = "index.html";
+    }
+
+    // Adiciona mensagens ao chat visual
+    function adicionarMensagem(autor, texto, classe) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `mensagem ${classe}`;
+      msgDiv.innerHTML = `<strong>${autor}:</strong> ${texto}`;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Leitura em Voz Alta da Resposta
+    function falarIA(texto) {
+      if (!suporteSintese) return;
+      window.speechSynthesis.cancel();
+
+      const mensagemVoz = new SpeechSynthesisUtterance(texto);
+      mensagemVoz.lang = 'pt-BR';
+      mensagemVoz.rate = 1.0;
+      window.speechSynthesis.speak(mensagemVoz);
+    }
+
+    // Consulta de Significado via API REST do Dicionário
+    async function consultarDicionario(palavra) {
+      const termoLimpo = palavra.trim().toLowerCase();
+      if (!termoLimpo) return;
+
+      adicionarMensagem("Aluno", palavra, "usuario");
+      palavraInput.value = "";
+
+      const msgAguarde = `Buscando o significado da palavra "${termoLimpo}"...`;
+      adicionarMensagem("Dicionário IA", msgAguarde, "ia");
+      falarIA(msgAguarde);
+
+      try {
+        const resposta = await fetch(`https://dicio-api-ten.vercel.app/v2/${encodeURIComponent(termoLimpo)}`);
+        
+        if (!resposta.ok) throw new Error("Palavra não encontrada");
+
+        const dados = await resposta.json();
+
+        if (dados && dados.length > 0) {
+          const item = dados[0];
+          const significado = item.xml || item.meaning || "Significado encontrado nas definições.";
+          
+          // Limpa tags HTML da resposta caso existam
+          const divTemp = document.createElement("div");
+          divTemp.innerHTML = significado;
+          const textoLimpo = divTemp.textContent || divTemp.innerText || "";
+
+          const explicacaoFinal = `Significado de ${termoLimpo}: ${textoLimpo}`;
+          adicionarMensagem("Dicionário IA", explicacaoFinal, "ia");
+          falarIA(explicacaoFinal);
+        } else {
+          throw new Error("Sem dados");
+        }
+      } catch (erro) {
+        // Fallback de pesquisa alternativa via Wikipédia caso a API do Dicionário falhe
+        try {
+          const respWiki = await fetch(`https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(termoLimpo)}`);
+          if (respWiki.ok) {
+            const dadosWiki = await respWiki.json();
+            const explicacaoWiki = `Definição para ${termoLimpo}: ${dadosWiki.extract}`;
+            adicionarMensagem("Dicionário IA", explicacaoWiki, "ia");
+            falarIA(explicacaoWiki);
+            return;
+          }
+        } catch (e) {}
+
+        const msgErro = `Não foi possível encontrar a palavra "${termoLimpo}". Verifique a grafia e tente novamente.`;
+        adicionarMensagem("Dicionário IA", msgErro, "ia");
+        falarIA(msgErro);
+      }
+    }
+
+    // Eventos de Clique e Tecla Enter
+    btnBuscar.addEventListener('click', () => {
+      consultarDicionario(palavraInput.value);
+    });
+
+    palavraInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        consultarDicionario(palavraInput.value);
+      }
+    });
+
+    // Entrada de Voz (Microfone)
+    if (suporteReconhecimento) {
+      const recognizer = new Recognition();
+      recognizer.lang = 'pt-BR';
+
+      btnMic.addEventListener('click', () => {
+        if (suporteSintese) window.speechSynthesis.cancel();
+        adicionarMensagem("Dicionário IA", "Ouvindo a palavra...", "ia");
+        recognizer.start();
+      });
+
+      recognizer.onresult = (e) => {
+        const palavraFalada = e.results[0][0].transcript;
+        consultarDicionario(palavraFalada);
+      };
+    } else {
+      btnMic.style.display = 'none';
+    }
+
+    // Interromper Leitura de Áudio
+    btnParar.addEventListener('click', () => {
+      if (suporteSintese) {
+        window.speechSynthesis.cancel();
+        adicionarMensagem("Dicionário IA", "Leitura do dicionário interrompida.", "ia");
+      }
+    });
+  </script>
+
+</body>
+</html>
