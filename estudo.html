@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modo de Estudo - Chat de Voz Acessível</title>
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #ffffff;
+      --accent-color: #ffcc00;
+      --focus-ring: #00e5ff;
+      --border-color: #333333;
+      --user-msg: #2d3748;
+      --ia-msg: #1a365d;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .btn-voltar {
+      display: inline-block;
+      background-color: transparent;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      font-weight: bold;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-voltar:focus,
+    .btn-voltar:hover {
+      outline: 4px solid var(--focus-ring);
+      outline-offset: 2px;
+      background-color: var(--accent-color);
+      color: #000000;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 25px;
+    }
+
+    h1 {
+      color: var(--accent-color);
+      margin-top: 0;
+    }
+
+    /* Container do Chat */
+    .chat-container {
+      height: 350px;
+      overflow-y: auto;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px;
+      background-color: #000000;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .mensagem {
+      padding: 12px 16px;
+      border-radius: 8px;
+      max-width: 85%;
+      word-wrap: break-word;
+      font-size: 1.05rem;
+    }
+
+    .mensagem.ia {
+      background-color: var(--ia-msg);
+      align-self: flex-start;
+      border-left: 4px solid var(--accent-color);
+    }
+
+    .mensagem.usuario {
+      background-color: var(--user-msg);
+      align-self: flex-end;
+      border-right: 4px solid var(--focus-ring);
+    }
+
+    /* Form para Digitação */
+    .input-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    textarea {
+      flex: 1;
+      height: 70px;
+      background-color: #000000;
+      color: #ffffff;
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 1rem;
+      resize: none;
+    }
+
+    textarea:focus {
+      outline: 4px solid var(--focus-ring);
+    }
+
+    /* Botões do Chat */
+    .controles-chat {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-acao {
+      background-color: var(--accent-color);
+      color: #000000;
+      border: none;
+      font-weight: bold;
+      padding: 14px 20px;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .btn-mic {
+      background-color: var(--focus-ring);
+      color: #000000;
+    }
+
+    .btn-parar {
+      background-color: #ff4444;
+      color: #ffffff;
+      flex: 0.8;
+    }
+
+    .btn-acao:focus,
+    .btn-acao:hover {
+      outline: 4px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav aria-label="Navegação de retorno">
+    <button type="button" class="btn-voltar" onclick="voltarParaMenu()" aria-label="Fechar guia e voltar ao menu principal">
+      &larr; Voltar ao Menu Principal
+    </button>
+  </nav>
+
+  <main role="main">
+    <h1>Modo de Estudo - Chat de Voz Acessível</h1>
+    <p>Digite ou fale o conteúdo da aula ou dúvida abaixo. A IA pesquisará o conteúdo na web, explicará o tema e responderá em voz alta.</p>
+
+    <!-- Histórico de Conversa -->
+    <div class="chat-container" id="chat-box" role="log" aria-live="polite" aria-label="Histórico do assistente de estudo">
+      <div class="mensagem ia">
+        <strong>IA de Estudo:</strong> Olá! O que você gostaria de estudar hoje? Digite o assunto ou use o botão de microfone para perguntar.
+      </div>
+    </div>
+
+    <!-- Campo para Digitação do Conteúdo -->
+    <div class="input-box">
+      <textarea id="texto-input" placeholder="Digite aqui o assunto da aula ou sua pergunta (Ex: Sistema Solar, Revolução Francesa, Fotossíntese)..." aria-label="Campo de texto para pergunta ou conteúdo da aula"></textarea>
+    </div>
+
+    <!-- Controles de Envio e Voz -->
+    <div class="controles-chat">
+      <button type="button" id="btn-enviar" class="btn-acao" aria-label="Pesquisar e explicar assunto com voz de IA">
+        🔍 Pesquisar e Explicar
+      </button>
+      <button type="button" id="btn-mic" class="btn-acao btn-mic" aria-label="Ativar microfone para fazer uma pergunta falada">
+        🎙️ Falar Dúvida
+      </button>
+      <button type="button" id="btn-parar" class="btn-acao btn-parar" aria-label="Parar leitura da voz de IA">
+        ⏹️ Parar Áudio
+      </button>
+    </div>
+  </main>
+
+  <script>
+    const chatBox = document.getElementById('chat-box');
+    const textoInput = document.getElementById('texto-input');
+    const btnEnviar = document.getElementById('btn-enviar');
+    const btnMic = document.getElementById('btn-mic');
+    const btnParar = document.getElementById('btn-parar');
+
+    // Suporte às APIs de Voz do Navegador
+    const suporteSintese = 'speechSynthesis' in window;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const suporteReconhecimento = !!Recognition;
+
+    function voltarParaMenu() {
+      if (suporteSintese) window.speechSynthesis.cancel();
+      window.close();
+      window.location.href = "index.html";
+    }
+
+    // Adiciona mensagens na tela do Chat
+    function adicionarMensagem(autor, texto, classe) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `mensagem ${classe}`;
+      msgDiv.innerHTML = `<strong>${autor}:</strong> ${texto}`;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // IA lê a resposta em Voz Alta
+    function falarIA(texto) {
+      if (!suporteSintese) return;
+      window.speechSynthesis.cancel();
+
+      const mensagemVoz = new SpeechSynthesisUtterance(texto);
+      mensagemVoz.lang = 'pt-BR';
+      mensagemVoz.rate = 1.0;
+      window.speechSynthesis.speak(mensagemVoz);
+    }
+
+    // Função de Pesquisa em Tempo Real na Wikipédia
+    async function buscarExplicacao(termo) {
+      const url = `https://pt.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(termo)}`;
+      try {
+        const resposta = await fetch(url);
+        if (!resposta.ok) throw new Error("Não encontrado");
+        const dados = await resposta.json();
+        
+        if (dados.extract) {
+          return dados.extract;
+        } else {
+          return null;
+        }
+      } catch (erro) {
+        return null;
+      }
+    }
+
+    // Lógica de Processamento e Explicação da IA
+    async function processarEstudo(pergunta) {
+      if (!pergunta.trim()) return;
+
+      const termoLimpo = pergunta.trim();
+      adicionarMensagem("Aluno", termoLimpo, "usuario");
+      textoInput.value = "";
+
+      const msgAguarde = `Pesquisando informações sobre "${termoLimpo}"...`;
+      adicionarMensagem("IA de Estudo", msgAguarde, "ia");
+      falarIA(msgAguarde);
+
+      // Realiza a pesquisa real
+      const resultado = await buscarExplicacao(termoLimpo);
+
+      let explicacaoFinal = "";
+      if (resultado) {
+        explicacaoFinal = `Aqui está a explicação sobre ${termoLimpo}: ${resultado}`;
+      } else {
+        explicacaoFinal = `Não encontrei um resumo exato para "${termoLimpo}". Tente pesquisar usando palavras-chave mais simples, como por exemplo o nome principal do assunto.`;
+      }
+
+      // Exibe e fala a explicação obtida
+      adicionarMensagem("IA de Estudo", explicacaoFinal, "ia");
+      falarIA(explicacaoFinal);
+    }
+
+    // Evento de envio por clique
+    btnEnviar.addEventListener('click', () => {
+      processarEstudo(textoInput.value);
+    });
+
+    // Permite enviar ao pressionar a tecla Enter
+    textoInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        processarEstudo(textoInput.value);
+      }
+    });
+
+    // Reconhecimento por Microfone (Falar Dúvida)
+    if (suporteReconhecimento) {
+      const recognizer = new Recognition();
+      recognizer.lang = 'pt-BR';
+
+      btnMic.addEventListener('click', () => {
+        if (suporteSintese) window.speechSynthesis.cancel();
+        adicionarMensagem("IA de Estudo", "Ouvindo sua dúvida...", "ia");
+        recognizer.start();
+      });
+
+      recognizer.onresult = (e) => {
+        const comandoVoz = e.results[0][0].transcript;
+        processarEstudo(comandoVoz);
+      };
+    } else {
+      btnMic.style.display = 'none';
+    }
+
+    // Interromper leitura em áudio
+    btnParar.addEventListener('click', () => {
+      if (suporteSintese) {
+        window.speechSynthesis.cancel();
+        adicionarMensagem("IA de Estudo", "Leitura pausada.", "ia");
+      }
+    });
+  </script>
+
+</body>
+</html>
