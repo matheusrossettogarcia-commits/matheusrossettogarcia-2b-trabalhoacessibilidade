@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat de Voz - Leitor de Documentos</title>
+  
+  <!-- Bibliotecas para extração de texto real -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #121212;
+      --card-bg: #1e1e1e;
+      --text-color: #ffffff;
+      --accent-color: #ffcc00;
+      --focus-ring: #00e5ff;
+      --border-color: #333333;
+      --user-msg: #2d3748;
+      --ia-msg: #1a365d;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.6;
+    }
+
+    .btn-voltar {
+      display: inline-block;
+      background-color: transparent;
+      color: var(--accent-color);
+      border: 2px solid var(--accent-color);
+      font-weight: bold;
+      text-decoration: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .btn-voltar:focus,
+    .btn-voltar:hover {
+      outline: 4px solid var(--focus-ring);
+      outline-offset: 2px;
+      background-color: var(--accent-color);
+      color: #000000;
+    }
+
+    main {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      padding: 25px;
+    }
+
+    h1 {
+      color: var(--accent-color);
+      margin-top: 0;
+    }
+
+    /* Área de Anexo */
+    .upload-box {
+      background-color: #000000;
+      border: 2px dashed var(--accent-color);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    input[type="file"] {
+      font-size: 1rem;
+      color: var(--text-color);
+    }
+
+    input[type="file"]:focus {
+      outline: 4px solid var(--focus-ring);
+    }
+
+    /* Container do Chat */
+    .chat-container {
+      height: 350px;
+      overflow-y: auto;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 15px;
+      background-color: #000000;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .mensagem {
+      padding: 12px 16px;
+      border-radius: 8px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .mensagem.ia {
+      background-color: var(--ia-msg);
+      align-self: flex-start;
+      border-left: 4px solid var(--accent-color);
+    }
+
+    .mensagem.usuario {
+      background-color: var(--user-msg);
+      align-self: flex-end;
+      border-right: 4px solid var(--focus-ring);
+    }
+
+    /* Controles de Voz do Chat */
+    .controles-chat {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-falar {
+      background-color: var(--accent-color);
+      color: #000000;
+      border: none;
+      font-weight: bold;
+      padding: 14px 20px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      flex: 2;
+      min-width: 200px;
+    }
+
+    .btn-parar {
+      background-color: #ff4444;
+      color: #ffffff;
+      border: none;
+      font-weight: bold;
+      padding: 14px 20px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .btn-falar:focus, .btn-parar:focus,
+    .btn-falar:hover, .btn-parar:hover {
+      outline: 4px solid var(--focus-ring);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <nav aria-label="Navegação de retorno">
+    <button type="button" class="btn-voltar" onclick="voltarParaMenu()" aria-label="Fechar guia e voltar ao menu principal">
+      &larr; Voltar ao Menu Principal
+    </button>
+  </nav>
+
+  <main role="main">
+    <h1>Chat de Voz - Leitor de Arquivos</h1>
+    <p>Anexe o documento abaixo. A IA lerá o conteúdo para você e responderá a seus comandos por voz.</p>
+
+    <!-- Upload de Arquivos -->
+    <div class="upload-box">
+      <label for="arquivo-input" style="display: block; font-weight: bold; margin-bottom: 10px;">
+        Anexar Imagem, PDF ou Documento:
+      </label>
+      <input type="file" id="arquivo-input" accept=".pdf, image/*" aria-label="Escolher arquivo PDF ou imagem">
+    </div>
+
+    <!-- Interface do Chat -->
+    <div class="chat-container" id="chat-box" role="log" aria-live="polite" aria-label="Histórico de mensagens do chat">
+      <div class="mensagem ia">
+        <strong>IA:</strong> Olá! Anexe um arquivo acima e clique em "Iniciar Leitura" ou fale um comando.
+      </div>
+    </div>
+
+    <!-- Ações de Voz -->
+    <div class="controles-chat">
+      <button type="button" id="btn-processar" class="btn-falar" aria-label="Processar arquivo e iniciar leitura em voz de IA">
+        🔊 Processar e Ler Arquivo
+      </button>
+      <button type="button" id="btn-ouvir-comando" class="btn-falar" style="background-color: var(--focus-ring); color: #000;" aria-label="Ativar microfone para enviar comando por voz">
+        🎙️ Falar Comando
+      </button>
+      <button type="button" id="btn-parar" class="btn-parar" aria-label="Parar leitura em áudio">
+        ⏹️ Parar Áudio
+      </button>
+    </div>
+  </main>
+
+  <script>
+    // Configura o leitor de PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+    const chatBox = document.getElementById('chat-box');
+    const campoArquivo = document.getElementById('arquivo-input');
+    const btnProcessar = document.getElementById('btn-processar');
+    const btnOuvirComando = document.getElementById('btn-ouvir-comando');
+    const btnParar = document.getElementById('btn-parar');
+
+    let textoDocumento = "";
+
+    // Suporte a APIs de Voz do Navegador
+    const suporteSintese = 'speechSynthesis' in window;
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const suporteReconhecimento = !!Recognition;
+
+    function voltarParaMenu() {
+      if (suporteSintese) window.speechSynthesis.cancel();
+      window.close();
+      window.location.href = "index.html";
+    }
+
+    // Adiciona mensagem ao chat
+    function adicionarMensagem(autor, texto, classe) {
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `mensagem ${classe}`;
+      msgDiv.innerHTML = `<strong>${autor}:</strong> ${texto}`;
+      chatBox.appendChild(msgDiv);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // IA Fala o texto
+    function falarIA(texto) {
+      if (!suporteSintese) return;
+      window.speechSynthesis.cancel();
+
+      const mensagemVoz = new SpeechSynthesisUtterance(texto);
+      mensagemVoz.lang = 'pt-BR';
+      mensagemVoz.rate = 1.0;
+      window.speechSynthesis.speak(mensagemVoz);
+    }
+
+    // Extração de texto em PDFs
+    async function extrairTextoPDF(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let textoCompleto = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        textoCompleto += textContent.items.map(item => item.str).join(' ') + ' ';
+      }
+      return textoCompleto.trim();
+    }
+
+    // Processamento do Arquivo Anexado
+    btnProcessar.addEventListener('click', async () => {
+      if (campoArquivo.files.length === 0) {
+        const aviso = "Por favor, selecione um arquivo primeiro.";
+        adicionarMensagem("IA", aviso, "ia");
+        falarIA(aviso);
+        return;
+      }
+
+      const arquivo = campoArquivo.files[0];
+      adicionarMensagem("IA", "Processando e extraindo texto do arquivo...", "ia");
+      falarIA("Processando e extraindo texto do arquivo.");
+
+      try {
+        if (arquivo.type === "application/pdf") {
+          textoDocumento = await extrairTextoPDF(arquivo);
+        } else if (arquivo.type.startsWith("image/")) {
+          const res = await Tesseract.recognize(arquivo, 'por');
+          textoDocumento = res.data.text;
+        } else {
+          textoDocumento = "";
+        }
+
+        if (!textoDocumento || textoDocumento.trim() === "") {
+          const msgVazia = "Não foi possível extrair o texto do arquivo anexado.";
+          adicionarMensagem("IA", msgVazia, "ia");
+          falarIA(msgVazia);
+        } else {
+          adicionarMensagem("IA", `Texto Extraído: ${textoDocumento}`, "ia");
+          falarIA(textoDocumento);
+        }
+      } catch (err) {
+        const msgErro = "Erro ao ler o documento.";
+        adicionarMensagem("IA", msgErro, "ia");
+        falarIA(msgErro);
+      }
+    });
+
+    // Reconhecimento de Comando por Voz (Microfone)
+    if (suporteReconhecimento) {
+      const recognizer = new Recognition();
+      recognizer.lang = 'pt-BR';
+
+      btnOuvirComando.addEventListener('click', () => {
+        if (suporteSintese) window.speechSynthesis.cancel();
+        adicionarMensagem("IA", "Ouvindo seu comando...", "ia");
+        recognizer.start();
+      });
+
+      recognizer.onresult = (e) => {
+        const comando = e.results[0][0].transcript;
+        adicionarMensagem("Você", comando, "usuario");
+
+        // Respostas aos comandos falados
+        if (comando.toLowerCase().includes("ler") || comando.toLowerCase().includes("repetir")) {
+          if (textoDocumento) {
+            adicionarMensagem("IA", textoDocumento, "ia");
+            falarIA(textoDocumento);
+          } else {
+            const aviso = "Nenhum documento lido até o momento. Anexe um arquivo acima.";
+            adicionarMensagem("IA", aviso, "ia");
+            falarIA(aviso);
+          }
+        } else {
+          const respostaPadrao = `Você disse: "${comando}". Para ouvir o documento, diga "ler documento".`;
+          adicionarMensagem("IA", respostaPadrao, "ia");
+          falarIA(respostaPadrao);
+        }
+      };
+    } else {
+      btnOuvirComando.style.display = 'none';
+    }
+
+    // Botão de Parar Áudio
+    btnParar.addEventListener('click', () => {
+      if (suporteSintese) {
+        window.speechSynthesis.cancel();
+        adicionarMensagem("IA", "Leitura em áudio interrompida.", "ia");
+      }
+    });
+  </script>
+
+</body>
+</html>
